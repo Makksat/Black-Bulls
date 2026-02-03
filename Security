@@ -1,0 +1,142 @@
+# Security Checklist (CIA) — Black-Bulls (Django E-commerce)
+
+This file tracks security controls implemented for the System Security project.
+Controls are mapped to CIA (Confidentiality, Integrity, Availability) and must include evidence
+(e.g., commits, tests, scan outputs, screenshots).
+
+---
+
+## Scope
+Application: Django e-commerce website (Black-Bulls)  
+Goal: Improve CIA through secure configuration, access control, and security tooling.
+
+---
+
+## Phase 0 — Baseline & Evidence
+- [ ] Create `security-hardening` branch
+- [ ] Record baseline behavior (login, cart, checkout, admin) with screenshots
+- [ ] Add this SECURITY.md file
+
+**Evidence**
+- Screenshots saved locally (before)
+- Git commits showing start of security work
+
+---
+
+## Phase 1 — Repo Hygiene & Secret Management (C)
+- [ ] Remove sensitive tracked artifacts (e.g., `db.sqlite3`, `.env`, logs, `.DS_Store`)
+- [ ] Add strong `.gitignore` (db, env, logs, media, caches)
+- [ ] Store secrets only in environment variables (SECRET_KEY, DEBUG, ALLOWED_HOSTS, email/payment keys)
+- [ ] Add `.env.example` (template only, no real secrets)
+
+**Why**
+- Prevent leaking database content or secrets via Git history.
+
+**Evidence**
+- Commit(s): removal + `.gitignore` + `.env.example`
+
+---
+
+## Phase 2 — Production Hardening (C + I)
+- [ ] `DEBUG=False` in production (controlled by env)
+- [ ] Proper `ALLOWED_HOSTS` in production
+- [ ] Secure cookies (Secure, HttpOnly, SameSite)
+- [ ] Force HTTPS + HSTS (production)
+- [ ] Security headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy)
+- [ ] Optional: Content Security Policy (CSP)
+
+**Why**
+- Reduce risk of session hijacking, clickjacking, and browser-based attacks.
+
+**Evidence**
+- `curl -I` output or screenshot proving headers are present
+
+---
+
+## Phase 3 — Authentication Protections (C + A)
+- [ ] Password validators enabled
+- [ ] Brute-force protection (choose one):
+  - [ ] `django-axes` lockout
+  - [ ] OR `django-ratelimit` throttling
+- [ ] Password reset does not leak whether an email exists
+- [ ] Optional: session timeout / shorter session lifetime
+
+**Why**
+- Reduce account takeover risk and protect site availability.
+
+**Evidence**
+- Screenshot/log: repeated failed login → blocked/throttled
+
+---
+
+## Phase 4 — Authorization Hardening (I + C)
+- [ ] Identify “owned objects” (orders, cart, profile, addresses, etc.)
+- [ ] Prevent IDOR: users can access only their own objects
+- [ ] Staff/admin routes protected (staff-only or permission checks)
+- [ ] Sensitive fields are server-controlled (prices, totals, payment status)
+
+**Why**
+- Prevent horizontal/vertical privilege escalation.
+
+**Evidence**
+- Unit tests: user A cannot access user B order/cart (403/404)
+- Commit(s) with view fixes
+
+---
+
+## Phase 5 — Logging & Detection (I + A)
+- [ ] Enable Django logging configuration
+- [ ] Log security-relevant events (failed logins, lockouts, permission denials, server errors)
+- [ ] Ensure logs do not include secrets/tokens/passwords
+
+**Why**
+- Attacks must be detectable and explainable during incident response.
+
+**Evidence**
+- Sample sanitized log output included in report
+
+---
+
+## Phase 6 — Security Tooling in CI (I)
+- [ ] GitHub Actions workflow runs:
+  - [ ] `bandit` (SAST)
+  - [ ] `pip-audit` (dependency vulnerability scan)
+- [ ] Optional: Dependabot enabled
+
+**Why**
+- Automatically detect vulnerabilities on every push/PR.
+
+**Evidence**
+- CI run logs / status badge screenshot
+
+---
+
+## Phase 7 — Backups & Recovery (A)
+- [ ] Backup script for database
+- [ ] Restore runbook (step-by-step)
+- [ ] Restore test performed and documented
+
+**Why**
+- Ensure recovery after failures or attacks; availability includes data availability.
+
+**Evidence**
+- Backup file + restore test notes/screenshot
+
+---
+
+## Evidence Log (fill during implementation)
+
+| Control | Evidence type | Where (commit id / screenshot / file) |
+|---|---|---|
+| Repo hygiene + ignore | Commit | |
+| Env secrets | Commit | |
+| Headers/HTTPS | curl output | |
+| Brute force protection | log/screenshot | |
+| Authorization (IDOR fixes) | tests + commit | |
+| Bandit + pip-audit | CI logs | |
+| Backups + restore | script + notes | |
+
+---
+
+## Notes
+- This project is educational. Before real production use, security controls should be reviewed and tested further.
